@@ -1,0 +1,83 @@
+.text {
+    font-size: 2em;
+    vertical-align: top;
+}
+
+.line {
+    fill: none;
+    stroke: #000000;
+    stroke-width: 2px;
+}
+
+.line.credit {
+    stroke: #990000;
+}
+
+.line.debit {
+    stroke: #009900;
+}
+
+.rect.credit {
+    fill: #990000;
+}
+
+.rect.debit {
+    fill: #009900;
+}
+
+.circle.credit {
+    stroke: #990000;
+}
+
+.circle.debit {
+    stroke: #009900;
+}
+
+.axis {
+    stroke-width: 2px;
+}
+
+#timeline #purchase #balance #payment .line {
+    fill: none;
+    stroke: #000;
+    stroke-width: 1.5px;
+}
+
+
+
+#timeline #purchase #balance #payment .attention {
+    background: yellow;
+    margin: -4px;
+    padding: 4px;
+}
+#timeline .area {
+    fill: steelblue;
+}
+
+#purchase .area {
+    fill: red;
+}
+
+#balance .area {
+    fill: grey;
+}
+
+#payment .area {
+    fill: red;
+}
+
+.barChart .bar {
+    fill: steelblue;
+}
+
+.barChart .x.axis path {
+    display: none;
+}
+
+#gates .x.axis text {
+    text-anchor: end;
+}
+
+#gates svg {
+    overflow: visible;
+}
