@@ -1,6 +1,6 @@
 /* global d3 */
 function timeSeriesChart() {
-  var margin = { top: 20, right: 20, bottom: 20, left: 20 },
+  var margin = { top: 20, right: 20, bottom: 40, left: 40 },
     width = 760,
     height = 120,
     xValue = function (d) { return d[0]; },
@@ -9,7 +9,8 @@ function timeSeriesChart() {
     yScale = d3.scaleLinear(),
     area = d3.area().x(X).y1(Y),
     line = d3.line().x(X).y(Y),
-    onBrushed = function () { };
+    onBrushed = function () { },
+    yTicks = 4
 
   function chart(selection) {
     selection.each(function (data) {
@@ -39,6 +40,7 @@ function timeSeriesChart() {
       gEnter.append("path").attr("class", "area");
       gEnter.append("path").attr("class", "line");
       gEnter.append("g").attr("class", "x axis");
+      gEnter.append("g").attr("class", "y axis");
       gEnter.append("g").attr("class", "brush");
 
 
@@ -62,6 +64,14 @@ function timeSeriesChart() {
       g.select(".x.axis")
         .attr("transform", "translate(0," + yScale.range()[0] + ")")
         .call(d3.axisBottom(xScale).tickSize(6, 0));
+
+      // Update the x-axis.
+      g.select(".y.axis")
+        .attr("transform", "translate(0," + xScale.range()[0] + ")")
+        .attr("transform", "rotate(90)")
+        .call(d3.axisBottom(yScale).tickSize(6, 0).ticks(yTicks))
+        .selectAll(".tick text")
+        .attr("transform", "translate(-10,30) rotate(225)");
 
       g.select(".brush").call(d3.brushX()
         .extent([

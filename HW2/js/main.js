@@ -3,8 +3,54 @@
 // 2015-05-01 00:43:28
 var dateFmt = d3.timeParse("%m/%d/%Y");
 
-height = 200
-width = 760
+height = 180
+width = 680
+barWidth = width
+
+const week = {
+    // "sunday": 0, // << if sunday is first day of week
+    1: "Monday",
+    2: "Tuesday",
+    3: "Wednesday",
+    4: "Thursday",
+    5: "Friday",
+    6: "Saturday",
+    7: "Sunday"
+}
+
+const year = {
+    4: "April",
+    8: "August",
+    12: "December",
+    2: "February",
+    1: "January",
+    7: "July",
+    6: "June",
+    3: "March",
+    5: "May",
+    11: "November",
+    10: "October",
+    9: "September"
+}
+
+function sortDayMonths(a, b) {
+    byDay = sortByDay(a, b)
+    if (!isNaN(byDay))
+        return byDay
+    return sortByMonth(a, b);
+}
+function sortByDay(a, b) {
+    let day1 = a.key.toLowerCase();
+    let day2 = b.key.toLowerCase();
+    return week[day1] - week[day2];
+}
+
+function sortByMonth(a, b) {
+    let month1 = a.key.toLowerCase();
+    let month2 = b.key.toLowerCase();
+    return year[month1] - year[month2];
+}
+
 var chartTimeline = timeSeriesChart()
     .width(width).height(height)
     .x(function (d) { return d.key; })
@@ -25,11 +71,23 @@ var chartBalance = timeSeriesChart()
     .x(function (d) { return d.key; })
     .y(function (d) { return d.value; });
 
-var barChartWeekday = barChart()
+var barChartWeekdayCount = barChart(week)
+    .width(barWidth).height(height)
     .x(function (d) { return d.key; })
     .y(function (d) { return d.value; });
 
-var barChartMonth = barChart()
+var barChartMonthCount = barChart(year)
+    .width(barWidth).height(height)
+    .x(function (d) { return d.key; })
+    .y(function (d) { return d.value; });
+
+var barChartWeekdaySum = barChart(week)
+    .width(barWidth).height(height)
+    .x(function (d) { return d.key; })
+    .y(function (d) { return d.value; });
+
+var barChartMonthSum = barChart(year)
+    .width(barWidth).height(height)
     .x(function (d) { return d.key; })
     .y(function (d) { return d.value; });
 
@@ -49,36 +107,65 @@ d3.csv("data/data.csv",
         maxDate = data.reduce((max, p) => p.Date > max ? p.Date : max, data[0].Date);
 
         for (var d = minDate; d <= maxDate; d.setDate(d.getDate() + 1)) {
-            var found = data.find(function (element) { return element.Date == d; });
-            if (found == false)
+            var found = data.find(function (element) {
+                return element.Date === d;
+            });
+            if (!found)
                 data.push(new { Date: d, amount: "0", balance: "0" });
         }
 
         var csData = crossfilter(data);
         // We create dimensions for each attribute we want to filter by
         csData.dimTime = csData.dimension(function (d) { return d.Date; });
-        csData.dimWeekday = csData.dimension(function (d) { return d.Date.toLocaleString('en-us', { weekday: 'long' }); });
-        csData.dimMonth = csData.dimension(function (d) { return d.Date.toLocaleString('en-us', { month: 'long' }); });
+        csData.dimWeekdayCount = csData.dimension(function (d) {
+            // return d.Date.toLocaleString('en-us', { weekday: 'long' }); });
+            //return d.Date.toLocaleString('en-us', { month: 'long' });  
+            return (d.Date.getDay() + 1).toString();
+        });
+
+        csData.dimMonthCount = csData.dimension(function (d) {
+            //return d.Date.toLocaleString('en-us', { month: 'long' });  
+            currentMonth = (d.Date.getMonth() + 1).toString();
+            if (currentMonth < 10) { currentMonth = '0' + currentMonth; }
+            return currentMonth
+        });
+        csData.dimWeekdaySum = csData.dimension(function (d) { return d.Date.toLocaleString('en-us', { weekday: 'long' }); });
+        csData.dimMonthSum = csData.dimension(function (d) { return d.Date.toLocaleString('en-us', { month: 'long' }); });
 
         // We bin each dimension
-        csData.date = csData.dimTime.group();
-        csData.payment = csData.dimTime.group(d3.timeDay).reduceSum(function (d) {
+        csData.date = csData.dimTime.group(d3.timeWeek);
+        csData.payment = csData.dimTime.group(d3.timeWeek).reduceSum(function (d) {
             amount = +d.amount
             if (amount > 0)
                 return amount;
             return 0;
         });;
-        csData.purchase = csData.dimTime.group(d3.timeDay).reduceSum(function (d) {
+        csData.purchase = csData.dimTime.group(d3.timeWeek).reduceSum(function (d) {
             amount = +d.amount
             if (amount < 0)
                 return -amount;
             return 0;
-        });;
-        csData.balance = csData.dimTime.group(d3.timeDay).reduceSum(function (d) {
+        });
+        csData.balance = csData.dimTime.group(d3.timeWeek).reduceSum(function (d) {
             return +d.balance;
-        });;
-        csData.weekday = csData.dimWeekday.group();
-        csData.month = csData.dimMonth.group();
+        });
+
+        csData.weekdayCount = csData.dimWeekdayCount.group();
+
+        csData.monthCount = csData.dimMonthCount.group();
+
+        csData.weekdaySum = csData.dimWeekdaySum.group().reduceSum(function (d) {
+            amount = +d.amount
+            if (amount > 0)
+                return amount;
+            return 0;
+        });
+        csData.monthSum = csData.dimMonthSum.group().reduceSum(function (d) {
+            amount = +d.amount
+            if (amount > 0)
+                return amount;
+            return 0;
+        });
 
         _onBrushed = function (element, selected) {
             if (!selected)
@@ -103,21 +190,39 @@ d3.csv("data/data.csv",
             _onBrushed(element, selected);
         });
 
-        barChartWeekday.onMouseOver(function (d) {
-            csData.dimWeekday.filter(d.key);
+        barChartWeekdayCount.onMouseOver(function (d) {
+            csData.dimWeekdayCount.filter(d.key);
             update();
         }).onMouseOut(function () {
             // Clear the filter
-            csData.dimWeekday.filterAll();
+            csData.dimWeekdayCount.filterAll();
             update();
         });
 
-        barChartMonth.onMouseOver(function (d) {
-            csData.dimMonth.filter(d.key);
+        barChartMonthCount.onMouseOver(function (d) {
+            csData.dimMonthCount.filter(d.key);
             update();
         }).onMouseOut(function () {
             // Clear the filter
-            csData.dimMonth.filterAll();
+            csData.dimMonthCount.filterAll();
+            update();
+        });
+
+        barChartWeekdaySum.onMouseOver(function (d) {
+            csData.dimWeekdaySum.filter(d.key);
+            update();
+        }).onMouseOut(function () {
+            // Clear the filter
+            csData.dimWeekdaySum.filterAll();
+            update();
+        });
+
+        barChartMonthSum.onMouseOver(function (d) {
+            csData.dimMonthSum.filter(d.key);
+            update();
+        }).onMouseOut(function () {
+            // Clear the filter
+            csData.dimMonthSum.filterAll();
             update();
         });
 
@@ -139,16 +244,30 @@ d3.csv("data/data.csv",
                 .datum(csData.balance.all())
                 .call(chartBalance);
 
-            d3.select("#weekday")
-                .datum(csData.weekday.all())
-                .call(barChartWeekday)
+            d3.select("#weekdayCount")
+                .datum(csData.weekdayCount.all())
+                .call(barChartWeekdayCount)
                 .select(".x.axis") //Adjusting the tick labels after drawn
                 .selectAll(".tick text")
                 .attr("transform", "translate(-8,-1) rotate(-45)");
 
-            d3.select("#month")
-                .datum(csData.month.all())
-                .call(barChartMonth)
+            d3.select("#monthCount")
+                .datum(csData.monthCount.all())
+                .call(barChartMonthCount)
+                .select(".x.axis") //Adjusting the tick labels after drawn
+                .selectAll(".tick text")
+                .attr("transform", "translate(-8,-1) rotate(-45)");
+
+            d3.select("#weekdaySum")
+                .datum(csData.weekdayCount.all())
+                .call(barChartWeekdaySum)
+                .select(".x.axis") //Adjusting the tick labels after drawn
+                .selectAll(".tick text")
+                .attr("transform", "translate(-8,-1) rotate(-45)");
+
+            d3.select("#monthSum")
+                .datum(csData.monthCount.all())
+                .call(barChartMonthSum)
                 .select(".x.axis") //Adjusting the tick labels after drawn
                 .selectAll(".tick text")
                 .attr("transform", "translate(-8,-1) rotate(-45)");
