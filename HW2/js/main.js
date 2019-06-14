@@ -42,6 +42,7 @@ d3.csv("data/data.csv",
     function (err, data) {
         if (err) throw err;
 
+        //mousedown
         data.sort((a, b) => (a.Date > b.Date) ? 1 : -1)
 
         minDate = data.reduce((min, p) => p.Date < min ? p.Date : min, data[0].Date);
@@ -52,7 +53,7 @@ d3.csv("data/data.csv",
             if (found == false)
                 data.push(new { Date: d, amount: "0", balance: "0" });
         }
-  
+
         var csData = crossfilter(data);
         // We create dimensions for each attribute we want to filter by
         csData.dimTime = csData.dimension(function (d) { return d.Date; });
@@ -79,24 +80,27 @@ d3.csv("data/data.csv",
         csData.weekday = csData.dimWeekday.group();
         csData.month = csData.dimMonth.group();
 
-        chartTimeline.onBrushed(function (selected) {
-            csData.dimTime.filter(selected);
+        _onBrushed = function (element, selected) {
+            if (!selected)
+                csData.dimTime.filterAll()
+            else
+                csData.dimTime.filter(selected);
             update();
+        }
+        chartTimeline.onBrushed(function (element, selected) {
+            _onBrushed(element, selected);
         });
 
-        chartPayment.onBrushed(function (selected) {
-            csData.dimTime.filter(selected);
-            update();
+        chartPayment.onBrushed(function (element, selected) {
+            _onBrushed(element, selected);
         });
 
-        chartPurchase.onBrushed(function (selected) {
-            csData.dimTime.filter(selected);
-            update();
+        chartPurchase.onBrushed(function (element, selected) {
+            _onBrushed(element, selected);
         });
 
-        chartBalance.onBrushed(function (selected) {
-            csData.dimTime.filter(selected);
-            update();
+        chartBalance.onBrushed(function (element, selected) {
+            _onBrushed(element, selected);
         });
 
         barChartWeekday.onMouseOver(function (d) {
@@ -116,6 +120,7 @@ d3.csv("data/data.csv",
             csData.dimMonth.filterAll();
             update();
         });
+
 
         function update() {
             d3.select("#timeline")
