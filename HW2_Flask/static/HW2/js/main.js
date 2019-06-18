@@ -1,6 +1,3 @@
-/* global d3, crossfilter, timeSeriesChart, barChart */
-
-// 2015-05-01 00:43:28
 var dateFmt = d3.timeParse("%m/%d/%Y");
 
 height = window.innerHeight / 5
@@ -72,7 +69,7 @@ var barChartMonthSum = barChart(yearMonths)
     .x(function (d) { return d.key; })
     .y(function (d) { return d.value; });
 
-d3.csv("data/data.csv",
+d3.csv("static/HW2/data/data.csv",
     function (d) {
         d.Date = dateFmt(d.date);
         return d;
@@ -129,7 +126,7 @@ d3.csv("data/data.csv",
                 csData.dimTime.filter(selected);
             update();
         }
-        
+
         _setGraphOnMouseOverCallback = function (graph, data) {
             graph.onMouseOver(function (d) {
                 data.filter(d.key);
@@ -169,28 +166,28 @@ d3.csv("data/data.csv",
             d3.select("#weekdayCount")
                 .datum(csData.weekdayCount.all())
                 .call(barChartWeekdayCount)
-                .select(".x.axis") 
+                .select(".x.axis")
                 .selectAll(".tick text")
                 .attr("transform", "translate(-8,-1) rotate(-45)");
 
             d3.select("#monthCount")
                 .datum(csData.monthCount.all())
                 .call(barChartMonthCount)
-                .select(".x.axis") 
+                .select(".x.axis")
                 .selectAll(".tick text")
                 .attr("transform", "translate(-8,-1) rotate(-45)");
 
             d3.select("#weekdaySum")
                 .datum(csData.weekdayCount.all())
                 .call(barChartWeekdaySum)
-                .select(".x.axis") 
+                .select(".x.axis")
                 .selectAll(".tick text")
                 .attr("transform", "translate(-8,-1) rotate(-45)");
 
             d3.select("#monthSum")
                 .datum(csData.monthCount.all())
                 .call(barChartMonthSum)
-                .select(".x.axis") 
+                .select(".x.axis")
                 .selectAll(".tick text")
                 .attr("transform", "translate(-8,-1) rotate(-45)");
         }
