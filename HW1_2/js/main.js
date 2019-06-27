@@ -1,6 +1,3 @@
-/* global d3, crossfilter, timeSeriesChart, barChart */
-
-// 2015-05-01 00:43:28
 var dateFmt = d3.timeParse("%m/%d/%Y");
 
 height = window.innerHeight / 5
